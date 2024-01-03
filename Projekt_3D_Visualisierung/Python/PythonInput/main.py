@@ -15,10 +15,10 @@ def main():
         try:
             data = json.loads(input_line)
             if "euler" in data.keys():
-                #print(data["euler"])
+                print(data["euler"])
                 euler(data)
             if "quaternions" in data.keys():
-                #print(data["quaternions"])
+                print(data["quaternions"])
                 quaternions(data)
 
         except json.JSONDecodeError as e:
@@ -35,21 +35,21 @@ def euler(data):
 
         if csvfile.tell() == 0:  # Check if the file is empty, write header if true
             writer.writeheader()
-
+        # euler x y z, acc x y z, gyr x y z, mag x y z
         writer.writerow({
             'Timestamp': timestamp,
             'Euler_X': data['euler'][0],
             'Euler_Y': data['euler'][1],
             'Euler_Z': data['euler'][2],
-            'Acc_X': data['acc'][0],
-            'Acc_Y': data['acc'][1],
-            'Acc_Z': data['acc'][2],
-            'Gyr_X': data['gyr'][0],
-            'Gyr_Y': data['gyr'][1],
-            'Gyr_Z': data['gyr'][2],
-            'Mag_X': data['mag'][0],
-            'Mag_Y': data['mag'][1],
-            'Mag_Z': data['mag'][2]
+            'Acc_X': data['euler'][3],
+            'Acc_Y': data['euler'][4],
+            'Acc_Z': data['euler'][5],
+            'Gyr_X': data['euler'][6],
+            'Gyr_Y': data['euler'][7],
+            'Gyr_Z': data['euler'][8],
+            'Mag_X': data['euler'][9],
+            'Mag_Y': data['euler'][10],
+            'Mag_Z': data['euler'][11]
         })
 
 def quaternions(data):
