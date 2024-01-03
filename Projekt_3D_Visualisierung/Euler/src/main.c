@@ -344,7 +344,7 @@ static void read_eulreg_run(void *o) {
 /* State SEND_EULREG */
 static void send_eulreg_run(void *o) {
     otError error = OT_ERROR_NONE;
-    char buffer [120]; //muss noch angepasst werden am ende
+    char buffer [150]; //muss noch angepasst werden am ende
 
     // euler x y z, acc x y z, gyr x y z, mag x y z
     sprintf(buffer, "{\"euler\": [%lf, %lf, %lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf]}\n", 
