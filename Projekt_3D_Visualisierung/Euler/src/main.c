@@ -344,10 +344,10 @@ static void read_eulreg_run(void *o) {
 /* State SEND_EULREG */
 static void send_eulreg_run(void *o) {
     otError error = OT_ERROR_NONE;
-    char buffer [150]; //muss noch angepasst werden am ende
+    char buffer [190]; //muss noch angepasst werden am ende
 
     // euler x y z, acc x y z, gyr x y z, mag x y z
-    sprintf(buffer, "{\"euler\": [%lf, %lf, %lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf]}\n", 
+    sprintf(buffer, "{\"euler\": [%lf, %lf, %lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf]}", 
         bno055.eul_x_deg, bno055.eul_y_deg, bno055.eul_z_deg, bno055.acc_x_m_s2, bno055.acc_y_m_s2, bno055.acc_z_m_s2,
         bno055.gyr_x_dps, bno055.gyr_y_dps, bno055.gyr_z_dps, bno055.mag_x_mT, bno055.mag_y_mT, bno055.mag_z_mT);
 
