@@ -56,18 +56,18 @@ def quaternions(data):
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
 
     with open('quaternion_data.csv', 'a', newline='') as csvfile:
-        fieldnames = ['Timestamp', 'Quaternion_X', 'Quaternion_Y', 'Quaternion_Z', 'Quaternion_W']
+        fieldnames = ['Timestamp', 'Quaternion_W', 'Quaternion_X', 'Quaternion_Y', 'Quaternion_Z']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         if csvfile.tell() == 0:  # Check if the file is empty, write header if true
             writer.writeheader()
-
+        # quat w x y z
         writer.writerow({
             'Timestamp': timestamp,
-            'Quaternion_X': data['quaternions'][0],
-            'Quaternion_Y': data['quaternions'][1],
-            'Quaternion_Z': data['quaternions'][2],
-            'Quaternion_W': data['quaternions'][3]
+            'Quaternion_W': data['quaternions'][0],
+            'Quaternion_X': data['quaternions'][1],
+            'Quaternion_Y': data['quaternions'][2],
+            'Quaternion_Z': data['quaternions'][3]
         })
 
 if __name__ == '__main__':
