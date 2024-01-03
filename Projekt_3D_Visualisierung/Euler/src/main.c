@@ -106,6 +106,18 @@ struct {
     double eul_x_deg;
     double eul_y_deg;
     double eul_z_deg;
+
+    double acc_x_m_s2;
+    double acc_y_m_s2;
+    double acc_z_m_s2;
+
+    double gyr_x_dps;
+    double gyr_y_dps;
+    double gyr_z_dps;
+
+    double mag_x_mT;
+    double mag_y_mT;
+    double mag_z_mT;
 } bno055;
 
 struct {
@@ -211,17 +223,13 @@ static void read_eulreg_run(void *o) {
     }
 
     int16_t acc_x, acc_y, acc_z;
-    double acc_x_m_s2, acc_y_m_s2, acc_z_m_s2;
 
     int16_t gyr_x, gyr_y, gyr_z;
-    double gyr_x_dps, gyr_y_dps, gyr_z_dps; // degrees per second
     double gyr_x_rps, gyr_y_rps, gyr_z_rps; // radians per second
 
     int16_t mag_x, mag_y, mag_z;
-    double mag_x_mT, mag_y_mT, mag_z_mT;
 
     int16_t eul_x, eul_y, eul_z;
-    double eul_x_deg, eul_y_deg, eul_z_deg;
 
     acc_x =		(((uint16_t)read_i2c_buffer[1]) << 8  | ((uint16_t)read_i2c_buffer[0])); 
 	acc_y =		(((uint16_t)read_i2c_buffer[3]) << 8  | ((uint16_t)read_i2c_buffer[2]));
@@ -235,7 +243,7 @@ static void read_eulreg_run(void *o) {
 	gyr_y =		(((uint16_t)read_i2c_buffer[15]) << 8 | ((uint16_t)read_i2c_buffer[14]));
 	gyr_z =		(((uint16_t)read_i2c_buffer[17]) << 8 | ((uint16_t)read_i2c_buffer[16]));
 
-	//Das sind die euler daten direkt vom Sensor
+	//Das sind die euler daten direkt vom Sensor zum testen
 	eul_x =		(((uint16_t)read_i2c_buffer[19]) << 8 | ((uint16_t)read_i2c_buffer[18])); 
 	eul_y =		(((uint16_t)read_i2c_buffer[21]) << 8 | ((uint16_t)read_i2c_buffer[20]));
 	eul_z =		(((uint16_t)read_i2c_buffer[23]) << 8 | ((uint16_t)read_i2c_buffer[22]));
@@ -247,36 +255,39 @@ static void read_eulreg_run(void *o) {
     //euler angle data representation:  1 degree = 16 LSB
 
     //acc zu m/s^2
-    acc_x_m_s2 = acc_x / 100.0;
-    acc_y_m_s2 = acc_y / 100.0;
-    acc_z_m_s2 = acc_z / 100.0;
+    bno055.acc_x_m_s2 = acc_x / 100.0;
+    bno055.acc_y_m_s2 = acc_y / 100.0;
+    bno055.acc_z_m_s2 = acc_z / 100.0;
 
     //mag zu µT
-    mag_x_mT = mag_x / 16.0;
-    mag_y_mT = mag_y / 16.0;
-    mag_z_mT = mag_z / 16.0;
+    bno055.mag_x_mT = mag_x / 16.0;
+    bno055.mag_y_mT = mag_y / 16.0;
+    bno055.mag_z_mT = mag_z / 16.0;
 
     //gyr zu dps (degrees per second)
-    gyr_x_dps = gyr_x / 16.0;
-    gyr_y_dps = gyr_y / 16.0;
-    gyr_z_dps = gyr_z / 16.0;
+    bno055.gyr_x_dps = gyr_x / 16.0;
+    bno055.gyr_y_dps = gyr_y / 16.0;
+    bno055.gyr_z_dps = gyr_z / 16.0;
 
-    //gyr zu rps (radians per second)
-    gyr_x_rps = (gyr_x_dps / 180.0) * M_PI;
-    gyr_y_rps = (gyr_y_dps / 180.0) * M_PI;
-    gyr_z_rps = (gyr_z_dps / 180.0) * M_PI;
+    //gyr zu rps (radians per second) !!! PI/180 = 0.01745329251
+    //gyr_x_rps = (gyr_x_dps / 180.0) * M_PI;
+    //gyr_y_rps = (gyr_y_dps / 180.0) * M_PI;
+    //gyr_z_rps = (gyr_z_dps / 180.0) * M_PI;
+    gyr_x_rps = bno055.gyr_x_dps * 0.01745329251;
+    gyr_y_rps = bno055.gyr_y_dps * 0.01745329251;
+    gyr_z_rps = bno055.gyr_z_dps * 0.01745329251;
 
     //realen euler daten zu degree (zum testen)
-    eul_x_deg = eul_x / 16.0;
-    eul_y_deg = eul_y / 16.0;
-    eul_z_deg = eul_z / 16.0;
+    bno055.eul_x_deg = eul_x / 16.0;
+    bno055.eul_y_deg = eul_y / 16.0;
+    bno055.eul_z_deg = eul_z / 16.0;
 
     //hier berechnung von euler daten aus acc + gyr + mag ///////////////////////////////////////////////////////////
 
     //thetaM=-atan2(acc.x()/9.8,acc.z()/9.8)/2/3.141592654*360;
-    data.thetaM     = -atan2(acc_x_m_s2 / 9.81, acc_z_m_s2 / 9.81) / 2 / M_PI * 360;
+    data.thetaM     = -atan2(bno055.acc_x_m_s2 / 9.81, bno055.acc_z_m_s2 / 9.81) / 2 / M_PI * 360;
     //phiM=-atan2(acc.y()/9.8,acc.z()/9.8)/2/3.141592654*360;
-    data.phiM       = -atan2(acc_y_m_s2 / 9.81, acc_z_m_s2 / 9.81) / 2 / M_PI * 360;
+    data.phiM       = -atan2(bno055.acc_y_m_s2 / 9.81, bno055.acc_z_m_s2 / 9.81) / 2 / M_PI * 360;
     //phiFnew=.95*phiFold+.05*phiM;
     data.phiFnew    = 0.95 * data.phiFold + 0.05 * data.phiM;
     //thetaFnew=.95*thetaFold+.05*thetaM;
@@ -302,9 +313,9 @@ static void read_eulreg_run(void *o) {
     data.thetaRad   = data.theta / 360 * (2 * M_PI);
 
     //Xm=mag.x()*cos(thetaRad)-mag.y()*sin(phiRad)*sin(thetaRad)+mag.z()*cos(phiRad)*sin(thetaRad);
-    data.Xm         = mag_x_mT * cos(data.thetaRad) - mag_y_mT * sin(data.phiRad) * sin(data.thetaRad) + mag_z_mT * cos(data.phiRad) * sin(data.thetaRad);
+    data.Xm         = bno055.mag_x_mT * cos(data.thetaRad) - bno055.mag_y_mT * sin(data.phiRad) * sin(data.thetaRad) + bno055.mag_z_mT * cos(data.phiRad) * sin(data.thetaRad);
     //Ym=mag.y()*cos(phiRad)+mag.z()*sin(phiRad);
-    data.Ym         = mag_y_mT * cos(data.phiRad) + mag_z_mT * sin(data.phiRad);
+    data.Ym         = bno055.mag_y_mT * cos(data.phiRad) + bno055.mag_z_mT * sin(data.phiRad);
 
     //psi=atan2(Ym,Xm)/(2*3.14)*360;
     data.psi        = atan2(data.Ym, data.Xm) / (2 * M_PI) * 360;
@@ -321,9 +332,10 @@ static void read_eulreg_run(void *o) {
 
     //hier ende von berechnugen /////////////////////////////////////////////////////////////////////////////////////
 
-	printk("EULER berechnet : %6.2f, %6.2f, %6.2f\n", bno055.eul_x_deg, bno055.eul_y_deg, bno055.eul_z_deg);
-    printk("EULER device    : %6.2f, %6.2f, %6.2f\n", eul_x_deg, eul_y_deg, eul_z_deg);
-    printk("difference      : %6.2f, %6.2f, %6.2f\n", eul_x_deg-bno055.eul_x_deg, eul_y_deg-bno055.eul_y_deg, eul_z_deg-bno055.eul_z_deg);
+	//printk("EULER berechnet : %6.2f, %6.2f, %6.2f\n", bno055.eul_x_deg, bno055.eul_y_deg, bno055.eul_z_deg);
+    //printk("EULER device    : %6.2f, %6.2f, %6.2f\n", eul_x_deg, eul_y_deg, eul_z_deg);
+    //printk("difference      : %6.2f, %6.2f, %6.2f\n", eul_x_deg-bno055.eul_x_deg, eul_y_deg-bno055.eul_y_deg, eul_z_deg-bno055.eul_z_deg);
+    //printk("{\"euler\": [%lf, %lf, %lf]}\n", bno055.eul_x_deg, bno055.eul_y_deg, bno055.eul_z_deg);
     
     sleep_msec = 0;
     smf_set_state(SMF_CTX(&s_obj), &states[SEND_EULREG]);
@@ -332,9 +344,11 @@ static void read_eulreg_run(void *o) {
 /* State SEND_EULREG */
 static void send_eulreg_run(void *o) {
     otError error = OT_ERROR_NONE;
-    char buffer [100]; //muss noch angepasst werden am ende
+    char buffer [250]; //muss noch angepasst werden am ende
 
-    sprintf(buffer, "{\"euler\": [%lf, %lf, %lf]}", bno055.eul_x_deg, bno055.eul_y_deg, bno055.eul_z_deg);
+    sprintf(buffer, "{\"euler\": [%lf, %lf, %lf], \"acc\": [%lf, %lf, %lf], \"gyr\": [%lf, %lf, %lf], \"mag\": [%lf, %lf, %lf]}\n", 
+        bno055.eul_x_deg, bno055.eul_y_deg, bno055.eul_z_deg, bno055.acc_x_m_s2, bno055.acc_y_m_s2, bno055.acc_z_m_s2,
+        bno055.gyr_x_dps, bno055.gyr_y_dps, bno055.gyr_z_dps, bno055.mag_x_mT, bno055.mag_y_mT, bno055.mag_z_mT);
 
     otInstance *myInstance;
     myInstance = openthread_get_default_instance();
@@ -377,7 +391,9 @@ static void send_eulreg_run(void *o) {
     }
 
     if (bno055.isCalibrated) {
-        //printk("{\"euler\": [%lf, %lf, %lf]}\n", bno055.eul_x_deg, bno055.eul_y_deg, bno055.eul_z_deg);
+        printk("{\"euler\": [%lf, %lf, %lf], \"acc\": [%lf, %lf, %lf], \"gyr\": [%lf, %lf, %lf], \"mag\": [%lf, %lf, %lf]}\n", 
+        bno055.eul_x_deg, bno055.eul_y_deg, bno055.eul_z_deg, bno055.acc_x_m_s2, bno055.acc_y_m_s2, bno055.acc_z_m_s2,
+        bno055.gyr_x_dps, bno055.gyr_y_dps, bno055.gyr_z_dps, bno055.mag_x_mT, bno055.mag_y_mT, bno055.mag_z_mT);
         sleep_msec = READ_SENSOR_INTERVALL;
         smf_set_state(SMF_CTX(&s_obj), &states[READ_EULREG]);
     } else {
