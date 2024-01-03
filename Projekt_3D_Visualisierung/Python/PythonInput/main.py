@@ -15,10 +15,10 @@ def main():
         try:
             data = json.loads(input_line)
             if "euler" in data.keys():
-                print(data["euler"])
+                #print(data["euler"])
                 euler(data)
             if "quaternions" in data.keys():
-                print(data["quaternions"])
+                #print(data["quaternions"])
                 quaternions(data)
 
         except json.JSONDecodeError as e:
