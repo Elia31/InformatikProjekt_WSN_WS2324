@@ -217,7 +217,7 @@ static void set_opmode_run(void *o) {
 static void read_eulreg_run(void *o) {
     // DATEN
     write_i2c_buffer[0] = ACC_DATA_X_LSB;
-    err = i2c_write_read(i2c_dev, BNO055_ADDRESS_A, write_i2c_buffer, 1, read_i2c_buffer, 24);
+    err = i2c_write_read(i2c_dev, BNO055_ADDRESS_A, write_i2c_buffer, 1, read_i2c_buffer, 18);
     if (err < 0) {
         printk("READ_EULREG failed: %d\n", err);
     }
@@ -243,16 +243,11 @@ static void read_eulreg_run(void *o) {
 	gyr_y =		(((uint16_t)read_i2c_buffer[15]) << 8 | ((uint16_t)read_i2c_buffer[14]));
 	gyr_z =		(((uint16_t)read_i2c_buffer[17]) << 8 | ((uint16_t)read_i2c_buffer[16]));
 
-	//Das sind die euler daten direkt vom Sensor zum testen
-	eul_x =		(((uint16_t)read_i2c_buffer[19]) << 8 | ((uint16_t)read_i2c_buffer[18])); 
-	eul_y =		(((uint16_t)read_i2c_buffer[21]) << 8 | ((uint16_t)read_i2c_buffer[20]));
-	eul_z =		(((uint16_t)read_i2c_buffer[23]) << 8 | ((uint16_t)read_i2c_buffer[22]));
 
     //abtastrate von gyro+accel:        100hz, mag: 20hz
     //accelerometer unit:               1 m/s^2 = 100 LSB
     //gyroscope unit:                   1 dps (degree per second) = 16 LSB
     //magnetometer unit:                1 mT = 16 LSB
-    //euler angle data representation:  1 degree = 16 LSB
 
     //acc zu m/s^2
     bno055.acc_x_m_s2 = acc_x / 100.0;
@@ -277,10 +272,6 @@ static void read_eulreg_run(void *o) {
     gyr_y_rps = bno055.gyr_y_dps * 0.01745329251;
     gyr_z_rps = bno055.gyr_z_dps * 0.01745329251;
 
-    //realen euler daten zu degree (zum testen)
-    bno055.eul_roll = eul_x / 16.0;
-    bno055.eul_pitch = eul_y / 16.0;
-    bno055.eul_yaw = eul_z / 16.0;
 
     //hier berechnung von euler daten aus acc + gyr + mag ///////////////////////////////////////////////////////////
 
@@ -331,11 +322,6 @@ static void read_eulreg_run(void *o) {
 
 
     //hier ende von berechnugen /////////////////////////////////////////////////////////////////////////////////////
-
-	//printk("EULER berechnet : %6.2f, %6.2f, %6.2f\n", bno055.eul_roll, bno055.eul_pitch, bno055.eul_yaw);
-    //printk("EULER device    : %6.2f, %6.2f, %6.2f\n", eul_roll, eul_pitch, eul_yaw);
-    //printk("difference      : %6.2f, %6.2f, %6.2f\n", eul_roll-bno055.eul_roll, eul_pitch-bno055.eul_pitch, eul_yaw-bno055.eul_yaw);
-    //printk("{\"euler\": [%lf, %lf, %lf]}\n", bno055.eul_roll, bno055.eul_pitch, bno055.eul_yaw);
     
     sleep_msec = 0;
     smf_set_state(SMF_CTX(&s_obj), &states[SEND_EULREG]);
@@ -344,7 +330,7 @@ static void read_eulreg_run(void *o) {
 /* State SEND_EULREG */
 static void send_eulreg_run(void *o) {
     otError error = OT_ERROR_NONE;
-    char buffer [190]; //muss noch angepasst werden am ende
+    char buffer [150]; //muss noch angepasst werden am ende
 
     // euler roll pitch yaw, acc x y z, gyr x y z, mag x y z
     sprintf(buffer, "{\"euler\": [%lf, %lf, %lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf]}", 

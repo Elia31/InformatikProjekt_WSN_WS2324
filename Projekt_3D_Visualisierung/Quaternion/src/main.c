@@ -196,7 +196,8 @@ static void read_quaternionreg_run(void *o) {
 static void send_quaternionreg_run(void *o) {
     otError error = OT_ERROR_NONE;
     char buffer [100]; //muss noch angepasst werden
-    
+
+    // quat w x y z
     sprintf(buffer, "{\"quaternions\": [%d, %d, %d, %d]}", bno055.quat_w, bno055.quat_x, bno055.quat_y, bno055.quat_z);
 
     otInstance *myInstance;
