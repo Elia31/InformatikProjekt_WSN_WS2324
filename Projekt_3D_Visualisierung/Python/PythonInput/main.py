@@ -29,18 +29,20 @@ def euler(data):
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
 
     with open('euler_data.csv', 'a', newline='') as csvfile:
-        fieldnames = ['Timestamp', 'Euler_X', 'Euler_Y', 'Euler_Z', 'Acc_X', 'Acc_Y', 'Acc_Z', 'Gyr_X', 'Gyr_Y',
+        fieldnames = ['Timestamp', 'Euler_Roll', 'Euler_Pitch', 'Euler_Yaw', 'Acc_X', 'Acc_Y', 'Acc_Z', 'Gyr_X', 'Gyr_Y',
                       'Gyr_Z', 'Mag_X', 'Mag_Y', 'Mag_Z']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         if csvfile.tell() == 0:  # Check if the file is empty, write header if true
             writer.writeheader()
-        # euler x y z, acc x y z, gyr x y z, mag x y z
+
+        #        0     1    2       3 4 5      6 7 8      9 10 11
+        # euler roll pitch yaw, acc x y z, gyr x y z, mag x y z
         writer.writerow({
             'Timestamp': timestamp,
-            'Euler_X': data['euler'][0],
-            'Euler_Y': data['euler'][1],
-            'Euler_Z': data['euler'][2],
+            'Euler_Roll': data['euler'][0],
+            'Euler_Pitch': data['euler'][1],
+            'Euler_Yaw': data['euler'][2],
             'Acc_X': data['euler'][3],
             'Acc_Y': data['euler'][4],
             'Acc_Z': data['euler'][5],

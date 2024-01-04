@@ -103,9 +103,9 @@ struct {
     uint8_t gyro_cali;
     uint8_t system_cali;
     bool isCalibrated;
-    double eul_x_deg;
-    double eul_y_deg;
-    double eul_z_deg;
+    double eul_roll;
+    double eul_pitch;
+    double eul_yaw;
 
     double acc_x_m_s2;
     double acc_y_m_s2;
@@ -278,9 +278,9 @@ static void read_eulreg_run(void *o) {
     gyr_z_rps = bno055.gyr_z_dps * 0.01745329251;
 
     //realen euler daten zu degree (zum testen)
-    bno055.eul_x_deg = eul_x / 16.0;
-    bno055.eul_y_deg = eul_y / 16.0;
-    bno055.eul_z_deg = eul_z / 16.0;
+    bno055.eul_roll = eul_x / 16.0;
+    bno055.eul_pitch = eul_y / 16.0;
+    bno055.eul_yaw = eul_z / 16.0;
 
     //hier berechnung von euler daten aus acc + gyr + mag ///////////////////////////////////////////////////////////
 
@@ -320,9 +320,9 @@ static void read_eulreg_run(void *o) {
     //psi=atan2(Ym,Xm)/(2*3.14)*360;
     data.psi        = atan2(data.Ym, data.Xm) / (2 * M_PI) * 360;
     
-    bno055.eul_x_deg = data.phi;
-    bno055.eul_y_deg = data.theta;
-    bno055.eul_z_deg = data.psi;
+    bno055.eul_roll = data.phi;
+    bno055.eul_pitch = data.theta;
+    bno055.eul_yaw = data.psi;
 
     //phiFold=phiFnew;
     data.phiFold = data.phiFnew;
@@ -332,10 +332,10 @@ static void read_eulreg_run(void *o) {
 
     //hier ende von berechnugen /////////////////////////////////////////////////////////////////////////////////////
 
-	//printk("EULER berechnet : %6.2f, %6.2f, %6.2f\n", bno055.eul_x_deg, bno055.eul_y_deg, bno055.eul_z_deg);
-    //printk("EULER device    : %6.2f, %6.2f, %6.2f\n", eul_x_deg, eul_y_deg, eul_z_deg);
-    //printk("difference      : %6.2f, %6.2f, %6.2f\n", eul_x_deg-bno055.eul_x_deg, eul_y_deg-bno055.eul_y_deg, eul_z_deg-bno055.eul_z_deg);
-    //printk("{\"euler\": [%lf, %lf, %lf]}\n", bno055.eul_x_deg, bno055.eul_y_deg, bno055.eul_z_deg);
+	//printk("EULER berechnet : %6.2f, %6.2f, %6.2f\n", bno055.eul_roll, bno055.eul_pitch, bno055.eul_yaw);
+    //printk("EULER device    : %6.2f, %6.2f, %6.2f\n", eul_roll, eul_pitch, eul_yaw);
+    //printk("difference      : %6.2f, %6.2f, %6.2f\n", eul_roll-bno055.eul_roll, eul_pitch-bno055.eul_pitch, eul_yaw-bno055.eul_yaw);
+    //printk("{\"euler\": [%lf, %lf, %lf]}\n", bno055.eul_roll, bno055.eul_pitch, bno055.eul_yaw);
     
     sleep_msec = 0;
     smf_set_state(SMF_CTX(&s_obj), &states[SEND_EULREG]);
@@ -346,9 +346,9 @@ static void send_eulreg_run(void *o) {
     otError error = OT_ERROR_NONE;
     char buffer [190]; //muss noch angepasst werden am ende
 
-    // euler x y z, acc x y z, gyr x y z, mag x y z
+    // euler roll pitch yaw, acc x y z, gyr x y z, mag x y z
     sprintf(buffer, "{\"euler\": [%lf, %lf, %lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf]}", 
-        bno055.eul_x_deg, bno055.eul_y_deg, bno055.eul_z_deg, bno055.acc_x_m_s2, bno055.acc_y_m_s2, bno055.acc_z_m_s2,
+        bno055.eul_roll, bno055.eul_pitch, bno055.eul_yaw, bno055.acc_x_m_s2, bno055.acc_y_m_s2, bno055.acc_z_m_s2,
         bno055.gyr_x_dps, bno055.gyr_y_dps, bno055.gyr_z_dps, bno055.mag_x_mT, bno055.mag_y_mT, bno055.mag_z_mT);
 
     otInstance *myInstance;
@@ -393,7 +393,7 @@ static void send_eulreg_run(void *o) {
 
     if (bno055.isCalibrated) {
         printk("{\"euler\": [%lf, %lf, %lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf]}\n", 
-        bno055.eul_x_deg, bno055.eul_y_deg, bno055.eul_z_deg, bno055.acc_x_m_s2, bno055.acc_y_m_s2, bno055.acc_z_m_s2,
+        bno055.eul_roll, bno055.eul_pitch, bno055.eul_yaw, bno055.acc_x_m_s2, bno055.acc_y_m_s2, bno055.acc_z_m_s2,
         bno055.gyr_x_dps, bno055.gyr_y_dps, bno055.gyr_z_dps, bno055.mag_x_mT, bno055.mag_y_mT, bno055.mag_z_mT);
         sleep_msec = READ_SENSOR_INTERVALL;
         smf_set_state(SMF_CTX(&s_obj), &states[READ_EULREG]);

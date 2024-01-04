@@ -6,9 +6,9 @@ df = pd.read_csv('euler_data.csv', parse_dates=['Timestamp'])
 
 # Plot für Euler_X, Euler_Y und Euler_Z erstellen
 plt.figure(figsize=(10, 6))
-plt.plot(df['Timestamp'], df['Euler_X'], label='Euler_X')
-plt.plot(df['Timestamp'], df['Euler_Y'], label='Euler_Y')
-plt.plot(df['Timestamp'], df['Euler_Z'], label='Euler_Z')
+plt.plot(df['Timestamp'], df['Euler_Roll'], label='Roll')
+plt.plot(df['Timestamp'], df['Euler_Pitch'], label='Pitch')
+plt.plot(df['Timestamp'], df['Euler_Yaw'], label='Yaw')
 plt.title('Euler Angles Over Time')
 plt.xlabel('Timestamp')
 plt.ylabel('Angle (degrees)')
