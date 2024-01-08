@@ -7,6 +7,7 @@
 #include <zephyr/net/openthread.h>
 #include <openthread/thread.h>
 #include <openthread/udp.h>
+#include <math.h>
 
 #define I2C_NODE		DT_NODELABEL(i2c0)	//DT_N_S_soc_i2c_40003000
 static const struct device *i2c_dev = DEVICE_DT_GET(I2C_NODE);
@@ -19,15 +20,17 @@ static const struct device *i2c_dev = DEVICE_DT_GET(I2C_NODE);
 #define OPERATION_MODE_NDOF     (0x0C)
 
 /*Registeraddressen*/
-#define BNO055_CHIP_ID_ADDR                     (0x00)
+#define BNO055_CHIP_ID_ADDR						(0x00)
 #define BNO055_PAGE_ID_ADDR                     (0x07)
-#define BNO055_QUATERNION_DATA_W_LSB_ADDR       (0x20)
+#define ACC_DATA_X_LSB                          (0x08) // Datasheet (acc daten x)
 #define BNO055_CALIB_STAT_ADDR                  (0x35)
 #define BNO055_OPR_MODE_ADDR                    (0x3D)
 #define BNO055_SYS_TRIGGER_ADDR                 (0x3F)
 
-#define READ_SENSOR_INTERVALL       20
-#define ERROR_SLEEP                 5000
+#define M_PI                                    3.14159265358979323846
+
+#define READ_SENSOR_INTERVALL		20
+#define ERROR_SLEEP					5000
 
 /* LEDS for Calibration*/
 #define LED0_NODE	DT_NODELABEL(led0)
@@ -54,8 +57,8 @@ enum state {
     SET_PAGEID0,
     SET_EXTERNALCRYSTAL,
     SET_OPMODE,
-    READ_QUATERNIONREG,
-    SEND_QUATERNIONREG,
+    READ_EULREG,
+    SEND_EULREG,
     READ_CALIBRATIONREG,
 };
 
@@ -67,7 +70,7 @@ struct s_object {
 int err;
 int32_t sleep_msec = 0;
 static uint8_t write_i2c_buffer[2];
-static uint8_t read_i2c_buffer[8];
+static uint8_t read_i2c_buffer[18];
 
 struct {
     uint8_t device_id;
@@ -76,10 +79,15 @@ struct {
     uint8_t gyro_cali;
     uint8_t system_cali;
     bool isCalibrated;
-    int16_t quat_w;
-    int16_t quat_x;
-    int16_t quat_y;
-    int16_t quat_z;
+    int16_t acc_x;
+    int16_t acc_y;
+    int16_t acc_z;
+    int16_t gyr_x;
+    int16_t gyr_y;
+    int16_t gyr_z;
+    int16_t mag_x;
+    int16_t mag_y;
+    int16_t mag_z;
 } bno055;
 
 /* State READ DEVICE_ID */
@@ -146,33 +154,41 @@ static void set_opmode_run(void *o) {
         printk("SET_OPMODE failed: %d\n", err);
     }
 	sleep_msec = 20;
-    smf_set_state(SMF_CTX(&s_obj), &states[READ_QUATERNIONREG]);
+    smf_set_state(SMF_CTX(&s_obj), &states[READ_EULREG]);
 }
 
-/* State READ_QUATERNIONREG */
-static void read_quaternionreg_run(void *o) {    
-    write_i2c_buffer[0] = BNO055_QUATERNION_DATA_W_LSB_ADDR;
-    err = i2c_write_read(i2c_dev, BNO055_ADDRESS_A, write_i2c_buffer, 1, read_i2c_buffer, 8);
+/* State READ_EULREG */
+static void read_eulreg_run(void *o) {
+    write_i2c_buffer[0] = ACC_DATA_X_LSB;
+    err = i2c_write_read(i2c_dev, BNO055_ADDRESS_A, write_i2c_buffer, 1, read_i2c_buffer, 18);
     if (err < 0) {
-        printk("READ_QUATERNIONREG failed: %d\n", err);
+        printk("READ_EULREG failed: %d\n", err);
     }
 
-    bno055.quat_w = (((uint16_t)read_i2c_buffer[1]) << 8 | ((uint16_t)read_i2c_buffer[0]));
-    bno055.quat_x = (((uint16_t)read_i2c_buffer[3]) << 8 | ((uint16_t)read_i2c_buffer[2]));
-    bno055.quat_y = (((uint16_t)read_i2c_buffer[5]) << 8 | ((uint16_t)read_i2c_buffer[4]));
-    bno055.quat_z = (((uint16_t)read_i2c_buffer[7]) << 8 | ((uint16_t)read_i2c_buffer[6]));
+    bno055.acc_x =      (((uint16_t)read_i2c_buffer[1]) << 8  | ((uint16_t)read_i2c_buffer[0])); 
+    bno055.acc_y =      (((uint16_t)read_i2c_buffer[3]) << 8  | ((uint16_t)read_i2c_buffer[2]));
+    bno055.acc_z =      (((uint16_t)read_i2c_buffer[5]) << 8  | ((uint16_t)read_i2c_buffer[4]));
+
+    bno055.mag_x =      (((uint16_t)read_i2c_buffer[7]) << 8  | ((uint16_t)read_i2c_buffer[6])); 
+    bno055.mag_y =      (((uint16_t)read_i2c_buffer[9]) << 8  | ((uint16_t)read_i2c_buffer[8]));
+    bno055.mag_z =      (((uint16_t)read_i2c_buffer[11]) << 8 | ((uint16_t)read_i2c_buffer[10]));
+
+    bno055.gyr_x =      (((uint16_t)read_i2c_buffer[13]) << 8 | ((uint16_t)read_i2c_buffer[12])); 
+    bno055.gyr_y =      (((uint16_t)read_i2c_buffer[15]) << 8 | ((uint16_t)read_i2c_buffer[14]));
+    bno055.gyr_z =      (((uint16_t)read_i2c_buffer[17]) << 8 | ((uint16_t)read_i2c_buffer[16]));
 
 
     sleep_msec = 0;
-    smf_set_state(SMF_CTX(&s_obj), &states[SEND_QUATERNIONREG]);
+    smf_set_state(SMF_CTX(&s_obj), &states[SEND_EULREG]);
 }
 
-/* State SEND_QUATERNIONREG */
-static void send_quaternionreg_run(void *o) {
+/* State SEND_EULREG */
+static void send_eulreg_run(void *o) {
     otError error = OT_ERROR_NONE;
-    char buffer [64]; //muss noch angepasst werden
-    
-    sprintf(buffer, "{\"quaternions\": [%d, %d, %d, %d]}", bno055.quat_w, bno055.quat_x, bno055.quat_y, bno055.quat_z);
+    char buffer [150]; //muss noch angepasst werden am ende
+
+    sprintf(buffer, "{\"euler\": [%d, %d, %d, %d, %d, %d, %d, %d, %d]}", bno055.acc_x, bno055.acc_y, bno055.acc_z,
+        bno055.gyr_x, bno055.gyr_y, bno055.gyr_z, bno055.mag_x, bno055.mag_y, bno055.mag_z);
 
     otInstance *myInstance;
     myInstance = openthread_get_default_instance();
@@ -200,7 +216,7 @@ static void send_quaternionreg_run(void *o) {
             printk("msg is NULL. udp closed\n");
             break;
         }
-        error = otMessageAppend(msg, buffer, (uint16_t)strlen(buffer));
+        error = otMessageAppend(msg, buffer, (uint16_t)strlen(buffer));        
         if (error != OT_ERROR_NONE)
         {
             break;
@@ -220,7 +236,7 @@ static void send_quaternionreg_run(void *o) {
 
     if (bno055.isCalibrated) {
         sleep_msec = READ_SENSOR_INTERVALL;
-        smf_set_state(SMF_CTX(&s_obj), &states[READ_QUATERNIONREG]);
+        smf_set_state(SMF_CTX(&s_obj), &states[READ_EULREG]);
     } else {
         sleep_msec = 0;
         smf_set_state(SMF_CTX(&s_obj), &states[READ_CALIBRATIONREG]);
@@ -263,7 +279,7 @@ static void read_calibrationreg_run(void *o) {
     }
 
     sleep_msec = READ_SENSOR_INTERVALL;
-    smf_set_state(SMF_CTX(&s_obj), &states[READ_QUATERNIONREG]);
+    smf_set_state(SMF_CTX(&s_obj), &states[READ_EULREG]);
 }
 
 /* Populate state table */
@@ -273,15 +289,15 @@ static const struct smf_state states[] = {
     [SET_PAGEID0] = SMF_CREATE_STATE(NULL, set_pageid0_run, NULL),
     [SET_EXTERNALCRYSTAL] = SMF_CREATE_STATE(NULL, set_externalcrystal_run, NULL),
     [SET_OPMODE] = SMF_CREATE_STATE(NULL, set_opmode_run, NULL),
-    [READ_QUATERNIONREG] = SMF_CREATE_STATE(NULL, read_quaternionreg_run, NULL),
-    [SEND_QUATERNIONREG] = SMF_CREATE_STATE(NULL, send_quaternionreg_run, NULL),
+    [READ_EULREG] = SMF_CREATE_STATE(NULL, read_eulreg_run, NULL),
+    [SEND_EULREG] = SMF_CREATE_STATE(NULL, send_eulreg_run, NULL),
     [READ_CALIBRATIONREG] = SMF_CREATE_STATE(NULL, read_calibrationreg_run, NULL),
 };
 
 void button_pressed_callback(const struct device *gpiob, struct gpio_callback *cb,
                              gpio_port_pins_t pins)
 {
-    /* Press button to skip checking if callibrated */
+    /* Press button to skip calibrating */
 
     // Turn of LEDs
     gpio_pin_set_dt(&led0_spec, 0);
@@ -293,7 +309,7 @@ void button_pressed_callback(const struct device *gpiob, struct gpio_callback *c
     bno055.isCalibrated = true;
 
     // jump to read state
-    smf_set_state(SMF_CTX(&s_obj), &states[READ_QUATERNIONREG]);
+    smf_set_state(SMF_CTX(&s_obj), &states[READ_EULREG]);
 }
 
 void main(void) {
