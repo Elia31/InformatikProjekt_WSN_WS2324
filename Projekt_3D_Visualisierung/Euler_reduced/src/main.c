@@ -12,21 +12,20 @@
 #define I2C_NODE		DT_NODELABEL(i2c0)	//DT_N_S_soc_i2c_40003000
 static const struct device *i2c_dev = DEVICE_DT_GET(I2C_NODE);
 
-
 //* BNO055 Address A (Pin17 LOW) **/
-#define BNO055_ADDRESS_A (0x28)
+#define BNO055_ADDRESS_A        (0x28)
 
 /*Operationsmodus*/
-#define OPERATION_MODE_CONFIG	(0x00)
-#define OPERATION_MODE_NDOF		(0x0C)
+#define OPERATION_MODE_CONFIG   (0x00)
+#define OPERATION_MODE_NDOF     (0x0C)
 
 /*Registeraddressen*/
 #define BNO055_CHIP_ID_ADDR						(0x00)
-#define BNO055_PAGE_ID_ADDR						(0x07)
+#define BNO055_PAGE_ID_ADDR                     (0x07)
 #define ACC_DATA_X_LSB                          (0x08) // Datasheet (acc daten x)
-#define BNO055_CALIB_STAT_ADDR					(0x35)
-#define BNO055_OPR_MODE_ADDR					(0x3D)
-#define BNO055_SYS_TRIGGER_ADDR					(0x3F)
+#define BNO055_CALIB_STAT_ADDR                  (0x35)
+#define BNO055_OPR_MODE_ADDR                    (0x3D)
+#define BNO055_SYS_TRIGGER_ADDR                 (0x3F)
 
 #define M_PI                                    3.14159265358979323846
 
@@ -238,7 +237,7 @@ static void read_eulreg_run(void *o) {
     gyr_y_rps = bno055.gyr_y_dps * 0.01745329251;
     gyr_z_rps = bno055.gyr_z_dps * 0.01745329251;
 
-
+    // Source: https://toptechboy.com/9-axis-imu-lesson-10-making-a-tilt-compensated-compass-with-arduino/
     data.thetaM     = -atan2(bno055.acc_x_m_s2 / 9.81, bno055.acc_z_m_s2 / 9.81) / 2 / M_PI * 360;
     data.phiM       = -atan2(bno055.acc_y_m_s2 / 9.81, bno055.acc_z_m_s2 / 9.81) / 2 / M_PI * 360;
     data.phiFnew    = 0.95 * data.phiFold + 0.05 * data.phiM;
@@ -277,17 +276,20 @@ static void send_eulreg_run(void *o) {
     char buffer [150]; //muss noch angepasst werden am ende
 
     // euler roll pitch yaw, acc x y z, gyr x y z, mag x y z
-    sprintf(buffer, "{\"euler\": [%lf, %lf, %lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf, %.3lf]}", 
+    sprintf(buffer, "{\"euler\": [%f, %f, %f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f]}", 
         bno055.eul_roll, bno055.eul_pitch, bno055.eul_yaw, bno055.acc_x_m_s2, bno055.acc_y_m_s2, bno055.acc_z_m_s2,
         bno055.gyr_x_dps, bno055.gyr_y_dps, bno055.gyr_z_dps, bno055.mag_x_mT, bno055.mag_y_mT, bno055.mag_z_mT);
 
-    // verstehe nicht warum udp send error 7? invalidArgs
-    int16_t size = strlen(buffer);
-    printk("size of message: %d\n", size);
+
+    //Testen (hier crasht es auch)
+    //sprintf(buffer, "{\"euler\": [-0.962563, -1.821112, -25.813482, 0.320, 0.160, 9.830, 0.000, -0.125, -0.062, 16.062, -8.875, -34.375]}");
+    //int16_t size = strlen(buffer);
+    //printk("size of message: %d\n", size);
 
 
     otInstance *myInstance;
     myInstance = openthread_get_default_instance();
+    if (myInstance == NULL){printk("myInstance is NULL\n");} // testen
     otUdpSocket mySocket;
 
     otMessageInfo messageInfo;
@@ -304,7 +306,14 @@ static void send_eulreg_run(void *o) {
             break;
         }
         otMessage *msg = otUdpNewMessage(myInstance, NULL);
-        error = otMessageAppend(msg, buffer, (uint16_t)strlen(buffer));
+        if (msg == NULL)    // testen
+        {
+            k_msleep(100);
+            error = otUdpClose(myInstance, &mySocket);
+            printk("msg is NULL. udp closed\n");
+            break;
+        }
+        error = otMessageAppend(msg, buffer, (uint16_t)strlen(buffer));        
         if (error != OT_ERROR_NONE)
         {
             break;
