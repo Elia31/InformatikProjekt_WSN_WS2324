@@ -9,7 +9,7 @@
 #include <openthread/udp.h>
 #include <math.h>
 
-#define I2C_NODE		DT_NODELABEL(i2c0)	//DT_N_S_soc_i2c_40003000
+#define I2C_NODE        DT_NODELABEL(i2c0)	//DT_N_S_soc_i2c_40003000
 static const struct device *i2c_dev = DEVICE_DT_GET(I2C_NODE);
 
 //* BNO055 Address A (Pin17 LOW) **/
@@ -20,7 +20,7 @@ static const struct device *i2c_dev = DEVICE_DT_GET(I2C_NODE);
 #define OPERATION_MODE_NDOF     (0x0C)
 
 /*Registeraddressen*/
-#define BNO055_CHIP_ID_ADDR						(0x00)
+#define BNO055_CHIP_ID_ADDR                     (0x00)
 #define BNO055_PAGE_ID_ADDR                     (0x07)
 #define ACC_DATA_X_LSB                          (0x08) // Datasheet (acc daten x)
 #define BNO055_CALIB_STAT_ADDR                  (0x35)
@@ -29,8 +29,8 @@ static const struct device *i2c_dev = DEVICE_DT_GET(I2C_NODE);
 
 #define M_PI                                    3.14159265358979323846
 
-#define READ_SENSOR_INTERVALL		20
-#define ERROR_SLEEP					5000
+#define READ_SENSOR_INTERVALL       50
+#define ERROR_SLEEP                 5000
 
 /* LEDS for Calibration*/
 #define LED0_NODE	DT_NODELABEL(led0)
@@ -117,8 +117,8 @@ struct {
     double Ym;
     double psi;
 
-    double dt;
-    uint32_t millisOld;
+    long double dt;
+    uint64_t millisOld;
 } data;
 
 /* State READ DEVICE_ID */
@@ -243,8 +243,8 @@ static void read_eulreg_run(void *o) {
     data.phiFnew    = 0.95 * data.phiFold + 0.05 * data.phiM;
     data.thetaFnew  = 0.95 * data.thetaFold + 0.05 * data.thetaM;
 
-    data.dt         = (k_uptime_get_32() - data.millisOld) / 1000;
-    data.millisOld  = k_uptime_get_32();
+    data.dt         = (k_uptime_get() - data.millisOld)/1000;
+    data.millisOld  = k_uptime_get();
 
     data.theta      = (data.theta + gyr_y_rps * data.dt) * 0.95 + data.thetaM * 0.05;
     data.phi        = (data.phi - gyr_x_rps * data.dt) * 0.95 + data.phiM * 0.05;
@@ -265,6 +265,18 @@ static void read_eulreg_run(void *o) {
 
     data.phiFold = data.phiFnew;
     data.thetaFold = data.thetaFnew;
+
+    //printk("Acc X Y Z: %.3f %.3f %.3f\n", bno055.acc_x_m_s2, bno055.acc_y_m_s2, bno055.acc_z_m_s2);
+    //printk("Gyr X Y Z: %.3f %.3f %.3f\n", gyr_x_rps, gyr_y_rps, gyr_z_rps);
+    //printk("Mag X Y Z: %.3f %.3f %.3f\n", bno055.mag_x_mT, bno055.mag_y_mT, bno055.mag_z_mT);
+    
+    //printk("thetaM = %.3f\nphiM = %.3f\nphiFnew = %.3f\nthetaFnew = %.3f\n", data.thetaM, data.phiM, data.phiFnew, data.thetaFnew);
+    //printk("dt =  %lf\nmillisOld =  %lld\n", data.dt, data.millisOld);
+    //printk("theta = %.3f\nphi = %.3f\nthetaG = %.3f\nphiG = %.3f\n", data.theta, data.phi, data.thetaG, data.phiG);
+    //printk("phiRad = %.3f\nthetaRad = %.3f\n", data.phiRad, data.thetaRad);
+    //printk("Xm = %.3f\nYm = %.3f\n", data.Xm, data.Ym);
+    //printk("psi = %.3f\n", data.psi);
+
 
     sleep_msec = 0;
     smf_set_state(SMF_CTX(&s_obj), &states[SEND_EULREG]);
@@ -419,7 +431,7 @@ void main(void) {
     data.phiFold = 0;
     data.thetaG=0;
     data.phiG=0;
-    data.millisOld=k_uptime_get_32();
+    data.millisOld=k_uptime_get();
 
     /* LEDs */
     gpio_pin_configure_dt(&led0_spec, GPIO_OUTPUT);
