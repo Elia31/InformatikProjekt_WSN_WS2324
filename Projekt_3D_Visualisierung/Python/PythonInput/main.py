@@ -34,8 +34,9 @@ toDeg = 1 / toRad
 
 
 def main():
-    com_port = input("Geben Sie den gewünschten COM-Port ein (z.B. 10 für COM Port 10): ")
-    com_port = "COM" + com_port
+    #com_port = input("Geben Sie den gewünschten COM-Port ein (z.B. 10 für COM Port 10): ")
+    #com_port = "COM" + com_port
+    com_port = "COM10"
     baud_rate = 115200
     ser = serial.Serial(com_port, baud_rate)
 
@@ -45,14 +46,14 @@ def main():
             data = json.loads(input_line)
             if "euler" in data.keys():
                 euler = np.array(data['euler'])
-                print("Euler before:", euler)
+                #print("Euler before:", euler)
                 euler = calc_euler(euler)
-                print("Roll=", euler[0] * toDeg, " Pitch=", euler[1] * toDeg, "Yaw=", euler[2] * toDeg)
+                #print("Roll=", euler[0] * toDeg, " Pitch=", euler[1] * toDeg, "Yaw=", euler[2] * toDeg)
                 #print("Euler after:", euler)
-                write_euler(euler)
+                #write_euler(euler)
             elif "quaternions" in data.keys():
                 quat = np.array(data['quaternions'])
-                write_quat(quat)
+                #write_quat(quat)
 
         except json.JSONDecodeError as e:
             print(f"Fehler beim Dekodieren der JSON-Daten: {e}")
@@ -86,6 +87,7 @@ def calc_euler(data) -> np.array:
 
     bno055.dt = (int(time.time() * 1000) - bno055.millisOld) / 1000
     bno055.millisOld = int(time.time() * 1000)
+
     bno055.theta = (bno055.theta + gyrY * bno055.dt) * 0.95 + bno055.thetaM * 0.05
     bno055.phi = (bno055.phi - gyrX * bno055.dt) * 0.95 + bno055.phiM * 0.05
     bno055.thetaG = bno055.thetaG + gyrY * bno055.dt
@@ -102,11 +104,20 @@ def calc_euler(data) -> np.array:
     bno055.phiFold = bno055.phiFnew
     bno055.thetaFold = bno055.thetaFnew
 
+    #print("Acc X Y Z: ", accX, accY, accZ)
+    #print("Gyr X Y Z: ", gyrX, gyrY, gyrZ)
+    #print("Mag X Y Z: ", magX, magY, magZ)
+    #print("thetaM = ", bno055.thetaM, "\nphiM = ", bno055.phiM, "\nphiFnew = ", bno055.phiFnew, "\nthetaFnew = ", bno055.thetaFnew)
+    #print("dt = ", bno055.dt, "\nmillisOld = ", bno055.millisOld)
+    #print("theta = ", bno055.theta, "\nphi = ", bno055.phi, "\nthetaG = ", bno055.thetaG, "\nphiG = ", bno055.phiG)
+    #print("phiRad = ", bno055.phiRad, "\nthetaRad = " , bno055.thetaRad)
+    #print("Xm = ", bno055.Xm, "\nYm = ", bno055.Ym)
+    #print("psi = ", bno055.psi)
+
     # phi = roll, theta = pitch, psi = yaw
 
-    #        0     1    2       3 4 5      6 7 8      9 10 11
-    # euler roll pitch yaw, acc x y z, gyr x y z, mag x y  z
-
+    #  0     1    2       3 4 5      6 7 8      9 10 11
+    # roll pitch yaw, acc x y z, gyr x y z, mag x y  z
     # roll, pitch, yaw, accX, accY, accZ, gyrX, gyrY, gyrZ, magX, magY, magZ
 
     return np.array([bno055.phi, bno055.theta, bno055.psi, accX, accY, accZ, gyrX, gyrY, gyrZ, magX, magY, magZ])
@@ -115,8 +126,8 @@ def calc_euler(data) -> np.array:
 def write_euler(data):
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
     with open('euler_data.csv', 'a', newline='') as csvfile:
-        fieldnames = ['Timestamp', 'Euler_Roll', 'Euler_Pitch', 'Euler_Yaw', 'Acc_X', 'Acc_Y', 'Acc_Z', 
-                      'Gyr_X', 'Gyr_Y', 'Gyr_Z', 'Mag_X', 'Mag_Y', 'Mag_Z']
+        fieldnames = ['Timestamp', 'Euler_Roll', 'Euler_Pitch', 'Euler_Yaw', 'Acc_X', 'Acc_Y', 'Acc_Z', 'Gyr_X', 'Gyr_Y', 'Gyr_Z',
+                       'Mag_X', 'Mag_Y', 'Mag_Z']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         if csvfile.tell() == 0:  # Check if the file is empty, write header if true
