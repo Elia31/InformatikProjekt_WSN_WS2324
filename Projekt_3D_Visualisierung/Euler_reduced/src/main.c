@@ -285,7 +285,7 @@ static void read_eulreg_run(void *o) {
 /* State SEND_EULREG */
 static void send_eulreg_run(void *o) {
     otError error = OT_ERROR_NONE;
-    char buffer [150]; //muss noch angepasst werden am ende
+    char buffer [130];
 
     // euler roll pitch yaw, acc x y z, gyr x y z, mag x y z
     sprintf(buffer, "{\"euler\": [%f, %f, %f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f]}", 
@@ -293,15 +293,14 @@ static void send_eulreg_run(void *o) {
         bno055.gyr_x_dps, bno055.gyr_y_dps, bno055.gyr_z_dps, bno055.mag_x_mT, bno055.mag_y_mT, bno055.mag_z_mT);
 
 
-    //Testen (hier crasht es auch)
-    //sprintf(buffer, "{\"euler\": [-0.962563, -1.821112, -25.813482, 0.320, 0.160, 9.830, 0.000, -0.125, -0.062, 16.062, -8.875, -34.375]}");
+
     //int16_t size = strlen(buffer);
     //printk("size of message: %d\n", size);
 
 
     otInstance *myInstance;
     myInstance = openthread_get_default_instance();
-    if (myInstance == NULL){printk("myInstance is NULL\n");} // testen
+    if (myInstance == NULL){printk("myInstance is NULL\n");}
     otUdpSocket mySocket;
 
     otMessageInfo messageInfo;
@@ -318,7 +317,7 @@ static void send_eulreg_run(void *o) {
             break;
         }
         otMessage *msg = otUdpNewMessage(myInstance, NULL);
-        if (msg == NULL)    // testen
+        if (msg == NULL)
         {
             k_msleep(100);
             error = otUdpClose(myInstance, &mySocket);

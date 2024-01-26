@@ -29,7 +29,7 @@ static const struct device *i2c_dev = DEVICE_DT_GET(I2C_NODE);
 
 #define M_PI                                    3.14159265358979323846
 
-#define READ_SENSOR_INTERVALL		20
+#define READ_SENSOR_INTERVALL		30
 #define ERROR_SLEEP					5000
 
 /* LEDS for Calibration*/
@@ -177,7 +177,6 @@ static void read_eulreg_run(void *o) {
     bno055.gyr_y =      (((uint16_t)read_i2c_buffer[15]) << 8 | ((uint16_t)read_i2c_buffer[14]));
     bno055.gyr_z =      (((uint16_t)read_i2c_buffer[17]) << 8 | ((uint16_t)read_i2c_buffer[16]));
 
-
     sleep_msec = 0;
     smf_set_state(SMF_CTX(&s_obj), &states[SEND_EULREG]);
 }
@@ -185,10 +184,13 @@ static void read_eulreg_run(void *o) {
 /* State SEND_EULREG */
 static void send_eulreg_run(void *o) {
     otError error = OT_ERROR_NONE;
-    char buffer [150]; //muss noch angepasst werden am ende
+    char buffer [70];
 
     sprintf(buffer, "{\"euler\": [%d, %d, %d, %d, %d, %d, %d, %d, %d]}", bno055.acc_x, bno055.acc_y, bno055.acc_z,
         bno055.gyr_x, bno055.gyr_y, bno055.gyr_z, bno055.mag_x, bno055.mag_y, bno055.mag_z);
+
+    //int16_t size = strlen(buffer);
+    //printk("size of message: %d\n", size);
 
     otInstance *myInstance;
     myInstance = openthread_get_default_instance();

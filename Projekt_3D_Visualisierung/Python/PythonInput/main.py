@@ -48,7 +48,10 @@ def main():
                 euler = np.array(data['euler'])
                 #print("Euler before:", euler)
                 euler = calc_euler(euler)
-                #print("Roll=", euler[0] * toDeg, " Pitch=", euler[1] * toDeg, "Yaw=", euler[2] * toDeg)
+                euler[0] = euler[0]*toRad
+                euler[1] = euler[1]*toRad
+                euler[2] = euler[2]*toRad+np.pi
+                print("Roll=", euler[0] * toDeg, " Pitch=", euler[1] * toDeg, "Yaw=", euler[2] * toDeg)
                 #print("Euler after:", euler)
                 #write_euler(euler)
             elif "quaternions" in data.keys():
