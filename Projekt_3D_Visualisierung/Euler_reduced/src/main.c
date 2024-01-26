@@ -117,7 +117,7 @@ struct {
     double Ym;
     double psi;
 
-    long double dt;
+    double dt;
     uint64_t millisOld;
 } data;
 
@@ -271,7 +271,7 @@ static void read_eulreg_run(void *o) {
     //printk("Mag X Y Z: %.3f %.3f %.3f\n", bno055.mag_x_mT, bno055.mag_y_mT, bno055.mag_z_mT);
     
     //printk("thetaM = %.3f\nphiM = %.3f\nphiFnew = %.3f\nthetaFnew = %.3f\n", data.thetaM, data.phiM, data.phiFnew, data.thetaFnew);
-    //printk("dt =  %lf\nmillisOld =  %lld\n", data.dt, data.millisOld);
+    //printk("dt =  %f\nmillisOld =  %lld\n", data.dt, data.millisOld);
     //printk("theta = %.3f\nphi = %.3f\nthetaG = %.3f\nphiG = %.3f\n", data.theta, data.phi, data.thetaG, data.phiG);
     //printk("phiRad = %.3f\nthetaRad = %.3f\n", data.phiRad, data.thetaRad);
     //printk("Xm = %.3f\nYm = %.3f\n", data.Xm, data.Ym);

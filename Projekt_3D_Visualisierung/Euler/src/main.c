@@ -142,7 +142,7 @@ struct {
     double psi;
 
     double dt;
-    uint32_t millisOld;
+    uint64_t millisOld;
 } data;
 
 
