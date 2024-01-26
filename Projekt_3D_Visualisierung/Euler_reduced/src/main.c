@@ -243,7 +243,7 @@ static void read_eulreg_run(void *o) {
     data.phiFnew    = 0.95 * data.phiFold + 0.05 * data.phiM;
     data.thetaFnew  = 0.95 * data.thetaFold + 0.05 * data.thetaM;
 
-    data.dt         = (k_uptime_get() - data.millisOld)/1000;
+    data.dt         = (k_uptime_get() - data.millisOld) / 1000.0;
     data.millisOld  = k_uptime_get();
 
     data.theta      = (data.theta + gyr_y_rps * data.dt) * 0.95 + data.thetaM * 0.05;

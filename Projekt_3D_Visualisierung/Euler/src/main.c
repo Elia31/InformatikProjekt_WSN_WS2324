@@ -286,8 +286,8 @@ static void read_eulreg_run(void *o) {
 
     //dt=(millis()-millisOld)/1000.;
     //millisOld=millis();
-    data.dt         = (k_uptime_get_32() - data.millisOld) / 1000;
-    data.millisOld  = k_uptime_get_32();
+    data.dt         = (k_uptime_get() - data.millisOld) / 1000.0;
+    data.millisOld  = k_uptime_get();
 
     //theta=(theta+gyr.y()*dt)*.95+thetaM*.05;
     data.theta      = (data.theta + gyr_y_rps * data.dt) * 0.95 + data.thetaM * 0.05;
