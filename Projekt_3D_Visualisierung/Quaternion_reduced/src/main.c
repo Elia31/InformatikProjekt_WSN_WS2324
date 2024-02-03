@@ -21,7 +21,7 @@ static const struct device *i2c_dev = DEVICE_DT_GET(I2C_NODE);
 /*Registeraddressen*/
 #define BNO055_CHIP_ID_ADDR                     (0x00)
 #define BNO055_PAGE_ID_ADDR                     (0x07)
-#define BNO055_QUATERNION_DATA_W_LSB_ADDR       (0x20)
+#define BNO055_QUATERNION_DATA_W_LSB_ADDR       (0x20) // Datasheet (quat daten w)
 #define BNO055_CALIB_STAT_ADDR                  (0x35)
 #define BNO055_OPR_MODE_ADDR                    (0x3D)
 #define BNO055_SYS_TRIGGER_ADDR                 (0x3F)
@@ -162,7 +162,6 @@ static void read_quaternionreg_run(void *o) {
     bno055.quat_y = (((uint16_t)read_i2c_buffer[5]) << 8 | ((uint16_t)read_i2c_buffer[4]));
     bno055.quat_z = (((uint16_t)read_i2c_buffer[7]) << 8 | ((uint16_t)read_i2c_buffer[6]));
 
-
     sleep_msec = 0;
     smf_set_state(SMF_CTX(&s_obj), &states[SEND_QUATERNIONREG]);
 }
@@ -170,7 +169,7 @@ static void read_quaternionreg_run(void *o) {
 /* State SEND_QUATERNIONREG */
 static void send_quaternionreg_run(void *o) {
     otError error = OT_ERROR_NONE;
-    char buffer [64]; //muss noch angepasst werden
+    char buffer [80];
     
     sprintf(buffer, "{\"quaternions\": [%d, %d, %d, %d]}", bno055.quat_w, bno055.quat_x, bno055.quat_y, bno055.quat_z);
 

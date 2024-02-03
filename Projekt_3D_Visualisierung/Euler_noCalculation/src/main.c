@@ -7,7 +7,6 @@
 #include <zephyr/net/openthread.h>
 #include <openthread/thread.h>
 #include <openthread/udp.h>
-#include <math.h>
 
 #define I2C_NODE		DT_NODELABEL(i2c0)	//DT_N_S_soc_i2c_40003000
 static const struct device *i2c_dev = DEVICE_DT_GET(I2C_NODE);
@@ -27,9 +26,7 @@ static const struct device *i2c_dev = DEVICE_DT_GET(I2C_NODE);
 #define BNO055_OPR_MODE_ADDR                    (0x3D)
 #define BNO055_SYS_TRIGGER_ADDR                 (0x3F)
 
-#define M_PI                                    3.14159265358979323846
-
-#define READ_SENSOR_INTERVALL		30
+#define READ_SENSOR_INTERVALL		50
 #define ERROR_SLEEP					5000
 
 /* LEDS for Calibration*/
@@ -184,13 +181,10 @@ static void read_eulreg_run(void *o) {
 /* State SEND_EULREG */
 static void send_eulreg_run(void *o) {
     otError error = OT_ERROR_NONE;
-    char buffer [70];
+    char buffer [80];
 
     sprintf(buffer, "{\"euler\": [%d, %d, %d, %d, %d, %d, %d, %d, %d]}", bno055.acc_x, bno055.acc_y, bno055.acc_z,
         bno055.gyr_x, bno055.gyr_y, bno055.gyr_z, bno055.mag_x, bno055.mag_y, bno055.mag_z);
-
-    //int16_t size = strlen(buffer);
-    //printk("size of message: %d\n", size);
 
     otInstance *myInstance;
     myInstance = openthread_get_default_instance();
