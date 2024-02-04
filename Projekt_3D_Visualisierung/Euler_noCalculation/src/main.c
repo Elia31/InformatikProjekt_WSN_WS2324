@@ -26,7 +26,7 @@ static const struct device *i2c_dev = DEVICE_DT_GET(I2C_NODE);
 #define BNO055_OPR_MODE_ADDR                    (0x3D)
 #define BNO055_SYS_TRIGGER_ADDR                 (0x3F)
 
-#define READ_SENSOR_INTERVALL		50
+#define READ_SENSOR_INTERVALL		30
 #define ERROR_SLEEP					5000
 
 /* LEDS for Calibration*/
